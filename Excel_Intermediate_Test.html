@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tally Prime with & GST - Exam</title>
+<style>
+body { margin:0; font-family:"Segoe UI",Arial,sans-serif; background:#f4f6f9; color:#222; }
+header {
+  background:#1976d2; color:#fff; padding:15px 30px; display:flex; justify-content:center; align-items:center;
+  position:relative; box-shadow:0 0 15px #1976d2aa;
+}
+#designer { position:absolute; left:30px; font-size:16px; font-weight:500; }
+header h1 { font-size:22px; margin:0; text-align:center; }
+#timer { position:absolute; right:30px; font-size:18px; font-weight:bold; }
+
+.container { max-width:900px; margin:30px auto; background:#fff; border-radius:12px; padding:25px; box-shadow:0 0 25px #1976d2aa; }
+.progress { height:10px; background:#eee; border-radius:5px; overflow:hidden; margin-bottom:20px; }
+.progress-bar { height:10px; background:#1976d2; width:0%; box-shadow:0 0 10px #1976d2; transition:width 0.3s ease; }
+.question-number { font-size:14px; color:#555; margin-bottom:8px; }
+.question { font-size:20px; font-weight:500; margin-bottom:18px; color:#111; }
+.options label { display:block; padding:12px; margin:10px 0; border:2px solid #1976d2; border-radius:6px; cursor:pointer; transition:all 0.2s ease; background:#f9f9f9; color:#222; }
+.options input { margin-right:10px; }
+.options label:hover { box-shadow:0 0 10px #1976d2; border-color:#1976d2; }
+.buttons { display:flex; justify-content:space-between; margin-top:25px; gap:10px; }
+button { padding:12px 25px; border:none; border-radius:6px; font-size:16px; cursor:pointer; color:#fff; transition:0.3s; }
+.btn-prev { background:#ff4081; box-shadow:0 0 15px #ff4081; }
+.btn-next { background:#1976d2; box-shadow:0 0 15px #1976d2; }
+.btn-reexam { background:#f57c00; box-shadow:0 0 15px #f57c00; }
+.btn-submit { background:#4CAF50; box-shadow:0 0 15px #4CAF50; width:100%; margin-top:20px; }
+button:hover { transform:scale(1.05); }
+.result { display:none; margin-top:25px; padding:20px; background:#e8f5e9; border:2px solid #4CAF50; border-radius:8px; text-align:center; font-size:20px; font-weight:bold; color:#2e7d32; box-shadow:0 0 20px #4CAF50aa; }
+.correct { background:#c8e6c9 !important; border-color:#2e7d32 !important; box-shadow:0 0 10px #2e7d32; }
+.wrong { background:#ffcdd2 !important; border-color:#c62828 !important; box-shadow:0 0 10px #c62828; }
+
+/* ----- Mobile Responsive Styling ----- */
+@media (max-width: 768px) {
+  header h1 { font-size: 18px; }
+  #designer { font-size: 14px; left: 15px; }
+  #timer { font-size: 16px; right: 15px; }
+
+  .container { margin:15px; padding:15px; }
+  .question { font-size:18px; }
+  .options label { font-size:15px; padding:10px; }
+  button { font-size:15px; padding:10px 18px; }
+  .btn-submit { font-size:16px; }
+  .result { font-size:18px; padding:15px; }
+}
+
+@media (max-width: 480px) {
+  header h1 { font-size: 16px; text-align:center; }
+  #designer { font-size: 12px; }
+  #timer { font-size: 14px; }
+
+  .container { margin:10px; padding:12px; }
+  .question { font-size:16px; }
+  .options label { font-size:14px; padding:8px; }
+  button { font-size:14px; padding:8px 15px; }
+  .btn-submit { font-size:15px; }
+  .result { font-size:16px; }
+}
+
+/* ----- Mobile Header Responsive Fix ----- */
+@media (max-width: 768px) {
+  header {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center;
+    height: auto;
+    padding: 10px;
+  }
+  #designer, #timer {
+    position: static !important;
+    margin: 8px 0;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 18px;
+    margin: 5px 0;
+    text-align: center;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <div id="designer">Developed by Aftab</div>
+  <h1>Welcome Surbhi | Adv. Excel Test, Part 1</h1>
+  <div id="timer">Time: 0:00</div>
+</header>
+
+<div class="container">
+  <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+  <div id="quizContent"></div>
+  <div class="buttons">
+    <button class="btn-prev" id="prevBtn" onclick="prevQuestion()">Previous</button>
+    <button class="btn-reexam" id="reexamBtn" onclick="reExam()">Re-Exam</button>
+    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Next</button>
+  </div>
+  <button class="btn-submit" id="submitBtn" onclick="submitQuiz()">Submit Quiz</button>
+  <div id="result" class="result"></div>
+</div>
+
+<script>
+// --- Questions array aapka same rahega ---
+const questions =
+[
+{q:"What is the correct syntax of the IF function?", options:["IF(condition, value_if_true, value_if_false)","IF(value_if_true, condition, value_if_false)","IF(condition, value_if_false, value_if_true)","IF(condition)"], answer:"IF(condition, value_if_true, value_if_false)"},
+
+{q:"In the IF function, what does the logical test represent?", options:["Output value","Condition to evaluate","Formula result","Data type"], answer:"Condition to evaluate"},
+
+{q:"What will be the result of =IF(A1>50,\"Pass\",\"Fail\") if A1 = 40?", options:["Pass","Fail","Error","Blank"], answer:"Fail"},
+
+{q:"The IF function belongs to which category in Excel?", options:["Statistical","Logical","Text","Lookup"], answer:"Logical"},
+
+{q:"What happens if the value_if_false argument is omitted in IF?", options:["Returns 0","Returns FALSE","Returns blank","Returns error"], answer:"Returns FALSE"},
+
+{q:"What will =IF(A1=\"Yes\",1,0) return when A1 contains \"Yes\"?", options:["0","1","Yes","Error"], answer:"1"},
+
+{q:"What is the primary purpose of the IF function?", options:["Data sorting","Logical evaluation","Formatting","Data aggregation"], answer:"Logical evaluation"},
+
+{q:"How many arguments does a standard IF function contain?", options:["1","2","3","4"], answer:"3"},
+
+{q:"The AND function returns TRUE when:", options:["Any one condition is TRUE","All conditions are TRUE","All conditions are FALSE","Only one condition is FALSE"], answer:"All conditions are TRUE"},
+
+{q:"The OR function returns TRUE when:", options:["All conditions are TRUE","At least one condition is TRUE","All conditions are FALSE","No condition is evaluated"], answer:"At least one condition is TRUE"},
+
+{q:"What does =IF(AND(A1>50,B1>50),\"Pass\",\"Fail\") indicate?", options:["Either condition must be true","Both conditions must be true","Both must be false","Only one is evaluated"], answer:"Both conditions must be true"},
+
+{q:"How many conditions can be used within the AND function?", options:["Only 2","Up to 5","Multiple","Only 1"], answer:"Multiple"},
+
+{q:"In =IF(OR(A1>90,B1>90),\"Topper\",\"Normal\"), when is \"Topper\" returned?", options:["When both values exceed 90","When at least one exceeds 90","When both are below 90","Never"], answer:"When at least one exceeds 90"},
+
+{q:"The AND function is classified under which category?", options:["Financial","Logical","Text","Lookup"], answer:"Logical"},
+
+{q:"IF combined with AND is typically used for:", options:["Single condition checks","Multi-condition validation","Data formatting","Chart creation"], answer:"Multi-condition validation"},
+
+{q:"The OR function is best suited for:", options:["Strict validation","Flexible condition matching","Data sorting","Text manipulation"], answer:"Flexible condition matching"},
+
+{q:"What is a Nested IF function?", options:["Multiple IF functions embedded within each other","A single IF condition","A text formula","A filter tool"], answer:"Multiple IF functions embedded within each other"},
+
+{q:"Why is Nested IF used?", options:["For simple logic","For multiple condition evaluation","For formatting","For sorting"], answer:"For multiple condition evaluation"},
+
+{q:"What is the maximum number of nested IF functions supported in modern Excel?", options:["7","10","64","Unlimited"], answer:"64"},
+
+{q:"Nested IF is commonly used in which scenario?", options:["Data entry","Tier-based calculations (e.g., discount slabs)","Formatting","Filtering"], answer:"Tier-based calculations (e.g., discount slabs)"},
+
+{q:"Why can Nested IF become complex?", options:["Due to limited arguments","Due to multiple logical branches","Due to formatting issues","Due to lack of support"], answer:"Due to multiple logical branches"},
+
+{q:"Which function is a modern alternative to Nested IF?", options:["SUM","IFS","COUNT","LOOKUP"], answer:"IFS"},
+
+{q:"What is the primary objective of a salary sheet?", options:["Text storage","Calculation of gross and net salary","Data sorting","Chart creation"], answer:"Calculation of gross and net salary"},
+
+{q:"Net salary is calculated by:", options:["Adding bonuses","Subtracting deductions from gross salary","Adding tax","Ignoring attendance"], answer:"Subtracting deductions from gross salary"},
+
+{q:"Which function is used to count attendance?", options:["SUM","COUNTIF","IF","COUNT"], answer:"COUNTIF"},
+
+{q:"What does =COUNTIF(A1:A30,\"P\") compute?", options:["Total entries","Count of \"P\" (Present)","Count of \"A\"","Error value"], answer:"Count of \"P\" (Present)"},
+
+{q:"HRA in salary structure represents:", options:["Deduction","Allowance","Tax","Bonus"], answer:"Allowance"},
+
+{q:"Attendance-based salary calculation requires:", options:["Static data","Daily tracking records","Charts","Filters"], answer:"Daily tracking records"},
+
+{q:"Profit is calculated as:", options:["SP - CP","CP - SP","SP + CP","CP ÷ SP"], answer:"SP - CP"},
+
+{q:"Loss is calculated as:", options:["SP - CP","CP - SP","SP + CP","CP ÷ SP"], answer:"CP - SP"},
+
+{q:"Profit percentage formula is:", options:["Profit / SP × 100","Profit / CP × 100","CP / Profit","SP / Profit"], answer:"Profit / CP × 100"},
+
+{q:"Automatic calculations in Excel rely on:", options:["Manual entry","Formulas","Charts","Filters"], answer:"Formulas"},
+
+{q:"Sorting is used to:", options:["Format data","Arrange data systematically","Delete data","Merge cells"], answer:"Arrange data systematically"},
+
+{q:"Filtering enables users to:", options:["Delete unwanted data","Hide non-relevant records","Format cells","Merge data"], answer:"Hide non-relevant records"},
+
+{q:"Ascending order represents:", options:["Z to A","9 to 1","A to Z / Smallest to Largest","None"], answer:"A to Z / Smallest to Largest"},
+
+{q:"The Filter option is available under which tab?", options:["Home","Data","Insert","Review"], answer:"Data"},
+
+{q:"What is the primary purpose of Conditional Formatting in Excel?", options:["To sort data automatically","To highlight data based on specified conditions","To merge cells","To apply formulas"], answer:"To highlight data based on specified conditions"},
+
+{q:"Which feature is used to highlight duplicate values in a dataset?", options:["Conditional Formatting","Data Validation","Pivot Table","Flash Fill"], answer:"Conditional Formatting"},
+
+{q:"What is the main use of Advanced Filter in Excel?", options:["Basic filtering","Applying complex filtering criteria","Formatting cells","Sorting data"], answer:"Applying complex filtering criteria"},
+
+{q:"Which feature allows extraction of unique records from a dataset?", options:["Sort","Advanced Filter","Flash Fill","Data Table"], answer:"Advanced Filter"},
+
+{q:"What is the purpose of the Text to Columns feature?", options:["To merge multiple columns","To split data into multiple columns","To format text","To delete columns"], answer:"To split data into multiple columns"},
+
+{q:"Which of the following is a commonly used delimiter in Text to Columns?", options:["Comma","Formula","Chart","Pivot"], answer:"Comma"},
+
+{q:"What does Flash Fill primarily do in Excel?", options:["Performs calculations","Automatically fills data based on detected patterns","Filters data","Creates charts"], answer:"Automatically fills data based on detected patterns"},
+
+{q:"What is the keyboard shortcut for Flash Fill?", options:["Ctrl + F","Ctrl + E","Ctrl + Shift + L","Alt + Enter"], answer:"Ctrl + E"},
+
+{q:"What is the purpose of the Consolidate feature in Excel?", options:["To delete duplicate data","To combine data from multiple ranges or worksheets","To format cells","To filter records"], answer:"To combine data from multiple ranges or worksheets"},
+
+{q:"Which type of data sources can be used in Consolidation?", options:["Only one worksheet","Multiple worksheets or ranges","Only text data","Only numeric data"], answer:"Multiple worksheets or ranges"},
+
+{q:"What is the main purpose of Data Validation?", options:["To sort data","To restrict user input based on defined rules","To apply formatting","To create charts"], answer:"To restrict user input based on defined rules"},
+
+{q:"Which feature is used to create a drop-down list in Excel?", options:["Conditional Formatting","Data Validation","Flash Fill","Pivot Table"], answer:"Data Validation"},
+
+{q:"Scenario Manager is primarily used for which purpose?", options:["Data entry","What-if analysis","Formatting","Filtering"], answer:"What-if analysis"},
+
+{q:"What is the main function of Goal Seek?", options:["To summarize data","To determine the required input for a desired result","To filter data","To sort data"], answer:"To determine the required input for a desired result"},
+
+{q:"What is the purpose of a Data Table in Excel?", options:["To organize data","To perform multiple calculations using different input values","To create charts","To validate data"], answer:"To perform multiple calculations using different input values"},
+
+{q:"What is the primary use of a Pivot Table?", options:["Data entry","Data summarization and analysis","Formatting","Filtering only"], answer:"Data summarization and analysis"},
+
+{q:"Under which tab can you find the Pivot Table option?", options:["Home","Data","Insert","Review"], answer:"Insert"},
+
+{q:"Timeline is associated with which Excel feature?", options:["Charts","Pivot Table","Data Validation","Conditional Formatting"], answer:"Pivot Table"},
+
+{q:"What is the main purpose of a Timeline in Excel?", options:["To sort data","To filter data based on dates","To calculate formulas","To merge cells"], answer:"To filter data based on dates"},
+
+{q:"Where are Pivot Table fields managed and arranged?", options:["Formula Bar","Field List Pane","Status Bar","Ribbon"], answer:"Field List Pane"},
+
+{q:"What does the Row Area represent in a Pivot Table?", options:["Calculations","Categories or labels","Charts","Filters"], answer:"Categories or labels"},
+
+{q:"What is displayed in the Column Area of a Pivot Table?", options:["Data values","Headings or column labels","Filters","Formulas"], answer:"Headings or column labels"},
+
+{q:"What is the function of the Values Area in a Pivot Table?", options:["Formatting","Performing aggregations like Sum or Count","Sorting","Filtering"], answer:"Performing aggregations like Sum or Count"},
+
+{q:"Why is it necessary to refresh a Pivot Table?", options:["To format data","To update data after changes in the source","To delete records","To apply formulas"], answer:"To update data after changes in the source"},
+
+{q:"What is a Slicer in Excel?", options:["A chart type","An interactive filtering tool","A formula","A formatting option"], answer:"An interactive filtering tool"},
+
+{q:"What do color scales in Conditional Formatting represent?", options:["Data sorting","Data visualization using gradients","Data deletion","Data merging"], answer:"Data visualization using gradients"},
+
+{q:"Nested IF functions are best suited for:", options:["Simple calculations","Multi-level decision making","Formatting","Chart creation"], answer:"Multi-level decision making"},
+
+{q:"When does Flash Fill fail to work effectively?", options:["When data is numeric","When no clear pattern is identified","When formulas are used","When data is sorted"], answer:"When no clear pattern is identified"},
+
+{q:"What does a Data Validation error alert do?", options:["Deletes invalid data","Displays a warning message for incorrect input","Formats cells","Sorts data"], answer:"Displays a warning message for incorrect input"},
+
+{q:"In Goal Seek, which value is adjusted automatically?", options:["Output value","Input value","Formula","Chart"], answer:"Input value"},
+
+{q:"How many scenarios can be stored in Scenario Manager?", options:["Only one","Multiple scenarios","Two only","None"], answer:"Multiple scenarios"},
+
+{q:"What is required to apply an Advanced Filter?", options:["Chart","Criteria range","Pivot Table","Formula only"], answer:"Criteria range"},
+
+{q:"What is the purpose of grouping in a Pivot Table?", options:["To delete data","To combine and summarize similar data","To format cells","To filter records"], answer:"To combine and summarize similar data"},
+
+{q:"Which is considered the most powerful data analysis tool in Excel?", options:["Conditional Formatting","Pivot Table","Data Validation","Flash Fill"], answer:"Pivot Table"},
+
+];
+
+let currentQuestion = 0;
+let timer = 0;
+let timerInterval = null;
+let userAnswers = Array(questions.length).fill(null);
+let isSubmitted = false;
+
+const quizContent = document.getElementById("quizContent");
+const progressBar = document.getElementById("progressBar");
+const resultDiv = document.getElementById("result");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+function loadQuestion(){
+    const item = questions[currentQuestion];
+    quizContent.innerHTML=`
+    <div class="question-number">${currentQuestion+1} of ${questions.length}</div>
+    <div class="question">${item.q}</div>
+    <div class="options">
+    ${item.options.map(opt=>`
+    <label>
+    <input type="radio" name="q${currentQuestion}" value="${opt}" ${userAnswers[currentQuestion]===opt?"checked":""} ${isSubmitted?"disabled":""}>
+    ${opt}
+    </label>`).join("")}
+    </div>`;
+    updateProgress();
+    updateButtons();
+
+    if(!isSubmitted){
+        const optionsInputs = document.querySelectorAll(`input[name="q${currentQuestion}"]`);
+        optionsInputs.forEach(input=>{
+            input.addEventListener("change",()=>{ userAnswers[currentQuestion]=input.value; });
+        });
+    } else {
+        const optionsInputs = document.querySelectorAll(`input[name="q${currentQuestion}"]`);
+        optionsInputs.forEach(input=>{
+            if(input.value === item.answer){
+                input.parentElement.classList.add("correct");
+            }
+            if(userAnswers[currentQuestion] === input.value && input.value !== item.answer){
+                input.parentElement.classList.add("wrong");
+            }
+            input.disabled = true;
+        });
+    }
+}
+
+function nextQuestion(){ if(currentQuestion<questions.length-1){currentQuestion++; loadQuestion();} }
+function prevQuestion(){ if(currentQuestion>0){currentQuestion--; loadQuestion();} }
+function updateProgress(){ progressBar.style.width=((currentQuestion+1)/questions.length)*100+"%"; }
+function updateButtons(){ prevBtn.disabled=currentQuestion===0; nextBtn.disabled=currentQuestion===questions.length-1; prevBtn.style.opacity=prevBtn.disabled?0.5:1; nextBtn.style.opacity=nextBtn.disabled?0.5:1; }
+
+function submitQuiz(){
+    isSubmitted = true;
+    clearInterval(timerInterval);
+
+    questions.forEach((item,index)=>{
+        const options = document.querySelectorAll(`input[name="q${index}"]`);
+        options.forEach(opt=>{
+            if(opt.value === item.answer){
+                opt.parentElement.classList.add("correct");
+            }
+            if(opt.checked && opt.value !== item.answer){
+                opt.parentElement.classList.add("wrong");
+            }
+            opt.disabled = true;
+        });
+    });
+
+    resultDiv.style.display = "block";
+    let score = userAnswers.reduce((acc,ans,idx)=> ans===questions[idx].answer?acc+1:acc ,0);
+
+    let minutes = Math.floor(timer / 60);
+    let seconds = timer % 60;
+    let timeTaken = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+    resultDiv.textContent = `You Scored ${score}/${questions.length} | Time Taken: ${timeTaken}`;
+}
+
+function reExam(){
+    isSubmitted = false;
+    userAnswers.fill(null);
+    currentQuestion = 0;
+    timer = 0;           
+    resultDiv.style.display = "none";
+    loadQuestion();
+    startTimer();
+
+    document.querySelectorAll(".correct, .wrong").forEach(el=>{
+        el.classList.remove("correct","wrong");
+    });
+
+    const allInputs = document.querySelectorAll("input[type='radio']");
+    allInputs.forEach(inp=>inp.disabled=false);
+}
+
+function startTimer(){
+    const timerDisplay = document.getElementById("timer");
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+        timer++;
+        let minutes = Math.floor(timer / 60);
+        let seconds = timer % 60;
+        timerDisplay.textContent = `Time: ${minutes}:${seconds<10?"0":""}${seconds}`;
+    }, 1000);
+}
+
+loadQuestion();
+startTimer();
+</script>
+</body>
+</html>
